@@ -1,11 +1,8 @@
 <?php
+    require_once 'config.php';
 
     // Подключение к базе данных
-    $dbhost = "localhost";
-    $dbuser = "root";
-    $dbpass = "root";
-    $dbname = "testdb";
-    $conn = mysqli_connect($dbhost, $dbuser, $dbpass, $dbname);
+    $conn = mysqli_connect($host, $user, $password, $dbname);
 
     // Получаем значения полей email и password из формы
     $email = mysqli_real_escape_string($conn, $_POST['email']);

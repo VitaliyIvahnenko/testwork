@@ -11,8 +11,19 @@ if (isset($_POST['publish'])) {
   $mileage = $_POST['mileage'];
   $number_owners = $_POST['number_owners'];
   $files = $_FILES['photos'];
-  // Подключаемся к базе данных
-  $pdo = new PDO('mysql:host=localhost;dbname=testdb', 'root', 'root');
+
+  require_once 'config.php';
+
+  // Создание нового объекта PDO для подключения к базе данных
+  try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $password);
+    // Установка дополнительных атрибутов для PDO
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+  } catch (PDOException $e) {
+    // Обработка ошибки подключения к базе данных
+    die("Ошибка подключения к базе данных: " . $e->getMessage());
+  }
 
   // Получаем ID текущего пользователя (предполагается, что пользователь уже авторизован)
   $user_id = $_SESSION['userid'];

@@ -1,6 +1,20 @@
 <?php
+
+require_once 'config.php';
+
+// Создание нового объекта PDO для подключения к базе данных
+try {
+  $pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $password);
+  // Установка дополнительных атрибутов для PDO
+  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+  // Обработка ошибки подключения к базе данных
+  die("Ошибка подключения к базе данных: " . $e->getMessage());
+}
+
 // Подключаемся к базе данных
-$pdo = new PDO('mysql:host=localhost;dbname=testdb', 'root', 'root');
+//$pdo = new PDO('mysql:host=localhost;dbname=testdb', 'root', 'root');
 
 // Получение параметров запроса
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;

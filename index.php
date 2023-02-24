@@ -129,7 +129,7 @@
       <!-- Отображение списка объявлений -->
       <div id="ads-list" ></div>
 
-<!-- Постраничная навигация -->
+      <!-- Постраничная навигация -->
       <nav aria-label="Page navigation">
         <ul class="pagination" id="pagination">
           <li class="page-item disabled">
