@@ -1,7 +1,7 @@
 <?php
-// Установка параметров подключения к базе данных
-$host = 'localhost';
-$dbname = 'testdb';
-$user = 'root';
-$password = 'root';
+// Данные для подключения к базе данных
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'testdb');
+define('DB_USER', 'root');
+define('DB_PASSWORD', 'root');
 ?>

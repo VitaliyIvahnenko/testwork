@@ -54,31 +54,31 @@
         </div>
         <div class="form-group">
           <label for="city">Город</label>
-          <input type="text" class="form-control col-md-4" id="city" name="city" placeholder="Введите город">
+          <input type="text" class="form-control col-md-4" id="city" name="city" placeholder="Введите город" required>
         </div>
         <div class="form-group">
           <label for="brand">Марка</label>
-          <input type="text" class="form-control col-md-4" id="brand" name="brand" placeholder="Введите марку автомобиля">
+          <input type="text" class="form-control col-md-4" id="brand" name="brand" placeholder="Введите марку автомобиля" required>
         </div>
         <div class="form-group">
           <label for="model">Модель</label>
-          <input type="text" class="form-control col-md-4" id="model" name="model" placeholder="Введите модель автомобиля">
+          <input type="text" class="form-control col-md-4" id="model" name="model" placeholder="Введите модель автомобиля" required>
         </div>
         <div class="form-group">
           <label for="engine">Объем двигателя</label>
-          <input type="text" class="form-control col-md-4" id="engine" name="engine" placeholder="Введите объем двигателя">
+          <input type="text" class="form-control col-md-4" id="engine" name="engine" placeholder="Введите объем двигателя" required>
         </div>
         <div class="form-group">
           <label for="mileage">Пробег</label>
-          <input type="text" class="form-control col-md-4" id="mileage" name="mileage" placeholder="Введите текущий пробег автомобиля">
+          <input type="text" class="form-control col-md-4" id="mileage" name="mileage" placeholder="Введите текущий пробег автомобиля" required>
         </div>
         <div class="form-group">
           <label for="number_owners">количество хозяев</label>
-          <input type="text" class="form-control col-md-4" id="number_owners" name="number_owners" placeholder="Введите количество хозяев автомобиля">
+          <input type="text" class="form-control col-md-4" id="number_owners" name="number_owners" placeholder="Введите количество хозяев автомобиля" required>
         </div>
         <div class="form-group">
           <label for="photos">Фото</label>
-          <input type="file" class="form-control-file" id="photos" name="photos[]" multiple>
+          <input type="file" class="form-control-file" id="photos" name="photos[]" multiple accept=".png, .jpg, .jpeg">
         </div>
         <button type="submit" class="btn btn-primary" name="publish">Опубликовать</button>
         </form>

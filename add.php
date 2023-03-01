@@ -1,60 +1,71 @@
 <?php
-// Проверяем, была ли нажата кнопка "Опубликовать"
-if (isset($_POST['publish'])) {
-  session_start();
-  // Получаем данные из формы
-  $region = $_POST['region'];
-  $city = $_POST['city'];
-  $brand = $_POST['brand'];
-  $model = $_POST['model'];
-  $engine = $_POST['engine'];
-  $mileage = $_POST['mileage'];
-  $number_owners = $_POST['number_owners'];
-  $files = $_FILES['photos'];
+require_once 'config.php';
+require_once 'classes/Database.php';
+require_once 'classes/User.php';
+require_once 'classes/Ad.php';
+require_once 'classes/Photo.php';
 
-  require_once 'config.php';
+session_start();
 
-  // Создание нового объекта PDO для подключения к базе данных
-  try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $password);
-    // Установка дополнительных атрибутов для PDO
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-  } catch (PDOException $e) {
-    // Обработка ошибки подключения к базе данных
-    die("Ошибка подключения к базе данных: " . $e->getMessage());
+class AdPublisher {
+  private $db;
+  private $user;
+  private $ad;
+  private $photo;
+
+  public function __construct() {
+    $this->db = new Database();
+    $this->user = new User($this->db);
+    $this->photo = new Photo($this->db);
+    $this->ad = new Ad($this->db);
   }
 
-  // Получаем ID текущего пользователя (предполагается, что пользователь уже авторизован)
-  $user_id = $_SESSION['userid'];
+  public function publishAd() {
+    // Получаем данные из формы
+    $region = filter_input(INPUT_POST, 'region', FILTER_SANITIZE_STRING);
+    $city = filter_input(INPUT_POST, 'city', FILTER_SANITIZE_STRING);
+    $brand = filter_input(INPUT_POST, 'brand', FILTER_SANITIZE_STRING);
+    $model = filter_input(INPUT_POST, 'model', FILTER_SANITIZE_STRING);
+    $engine = filter_input(INPUT_POST, 'engine', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+    $mileage = filter_input(INPUT_POST, 'mileage', FILTER_SANITIZE_NUMBER_INT);
+    $number_owners = filter_input(INPUT_POST, 'number_owners', FILTER_SANITIZE_NUMBER_INT);
+    $files = $_FILES['photos'];
 
-  // Запрос к базе данных для получения количества опубликованных объявлений
-  $stmt = $pdo->prepare('SELECT COUNT(*) FROM ads WHERE user_id = ?');
-  $stmt->execute([$user_id]);
-  $count = $stmt->fetchColumn();
+    // Проверяем, что файлы были загружены
+    if (!empty($files)) {
+      // Массив допустимых расширений файлов
+      $allowed_extensions = array('png', 'jpeg', 'jpg');
+      // Обходим массив загруженных файлов
+      foreach ($files['name'] as $key => $value) {
+        // Получаем расширение текущего файла
+        $file_ext = strtolower(pathinfo($files['name'][$key], PATHINFO_EXTENSION));
+        // Проверяем, что расширение файла соответствует допустимым расширениям
+        if (!in_array($file_ext, $allowed_extensions)) {
+          // Если расширение недопустимо, вы можете показать сообщение об ошибке
+          die("Недопустимый формат файла: " . $files['name'][$key]);
+        }
+      }
+    }
 
-  // Если количество опубликованных объявлений больше или равно 3, выводим сообщение о лимите
-  if ($count >= 3) {
-    echo "Вы достигли лимита в 3 опубликованных объявления";
-  }
-  // Иначе, добавляем новую запись в базу данных
-  else {
-      $stmt = $pdo->prepare('INSERT INTO ads (user_id, region, city, brand, model, engine, mileage, owners) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-      $stmt->execute([$user_id, $region, $city, $brand, $model, $engine, $mileage, $number_owners]);
+    $user_id = $_SESSION['userid'];
 
-      // Получаем ID последней вставленной записи
-      $ad_id = $pdo->lastInsertId();
+    $count = $this->ad->getCountByUserId($user_id);
 
-      // Загружаем фотографии на сервер и сохраняем пути в базе данных
+    if ($count >= 3) {
+      echo "Вы достигли лимита в 3 опубликованных объявления";
+    }
+    else {
+
+
+      $ad_id->create($region, $city, $brand, $model, $engine, $mileage, $number_owners);
+
       $photo_paths = [];
       if (isset($_FILES['photos'])) {
-
         // Перебираем все загруженные файлы
         foreach ($files['name'] as $key => $name) {
           $tmp_name = $files['tmp_name'][$key];
           $error = $files['error'][$key];
 
-          // Если файл успешно загружен, перемещаем его на сервер и сохраняем путь в массив
           if ($error == UPLOAD_ERR_OK && is_uploaded_file($tmp_name)) {
             $filename = basename($name);
             $path = "uploads/$filename";
@@ -65,13 +76,17 @@ if (isset($_POST['publish'])) {
         }
       }
 
-      // Сохраняем пути к фотографиям в базе данных
       foreach ($photo_paths as $path) {
-        $stmt = $pdo->prepare('INSERT INTO photos (ad_id, path) VALUES (?, ?)');
-        $stmt->execute([$ad_id, $path]);
+        $this->photo->save($ad_id, $path);
       }
-
     }
+
     header('Location: index.php');
   }
+}
+
+if (isset($_POST['publish'])) {
+  $publisher = new AdPublisher();
+  $publisher->publishAd();
+}
 ?>

@@ -1,0 +1,184 @@
+<?php
+require_once 'models/User.php';
+
+class AuthController
+{
+    private $conn;
+
+    public function __construct($conn)
+    {
+        $this->conn = $conn;
+    }
+
+    public function login()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
+
+            $email = $this->validateEmail($_POST['email']);
+            $password = $this->validatePassword($_POST['password']);
+
+            $stmt = mysqli_prepare($this->conn, "SELECT * FROM users WHERE email=? AND password=?");
+            mysqli_stmt_bind_param($stmt, "ss", $email, $password);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            $row = mysqli_fetch_assoc($result);
+
+            // Проверка, успешен ли запрос
+            if(mysqli_num_rows($result) == 1){
+
+                // Авторизация прошла успешно, сохраняем данные пользователя в сессии
+                session_start();
+                $_SESSION['loggedin'] = true;
+                $_SESSION['email'] = $email;
+                $_SESSION['userid'] = $row['id'];
+
+                // Перенаправляем пользователя на домашнюю страницу
+                header('Location: index.php');
+                exit();
+
+            }else{
+
+                // Авторизация не удалась, выводим сообщение об ошибке
+                die("Неверный логин или пароль");
+            }
+        }
+    }
+
+    public function logout()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
+            session_start();
+            // разрушаем сессию
+            session_unset();
+            session_destroy();
+            // перенаправляем пользователя на домашнюю страницу
+            header('Location: index.php');
+            exit();
+        }
+    }
+
+    public function register()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
+            $email = $this->validateEmail($_POST['email']);
+            $password = $this->validatePassword($_POST['password']);
+
+            // Проверяем, есть ли уже пользователь с таким email в базе данных
+            $query = "SELECT * FROM users WHERE email='$email'";
+            $result = mysqli_query($this->conn, $query);
+            if (mysqli_num_rows($result) > 0) {
+                // Если есть, выводим сообщение об ошибке
+                echo "Пользователь с таким email уже зарегистрирован";
+            } else {
+
+                // Если нет, добавляем нового пользователя в базу данных
+                $query = "INSERT INTO users (email, password) VALUES ('$email', '$password')";
+                mysqli_query($this->conn, $query);
+
+                // Выводим сообщение об успешной регистрации
+                echo "Вы успешно зарегистрировались";
+            }
+        }
+    }
+
+    private function validateEmail($email)
+    {
+        // Удаляем лишние пробелы и экранируем спецсимволы
+        $email = trim(mysqli_real_escape_string($this->conn, $email));
+
+        // Валидируем email с помощью регулярного выражения
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            die('Некорректный email');
+        }
+       // Проверяем, есть ли уже пользователь с таким email в базе данных
+        $stmt = mysqli_prepare($this->conn, "SELECT * FROM users WHERE email=?");
+        mysqli_stmt_bind_param($stmt, "s", $email);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+
+        if(mysqli_num_rows($result) > 0){
+            die('Пользователь с таким email уже зарегистрирован');
+        }
+
+        return $email;
+    }
+
+    private function validatePassword($password)
+    {
+        // Удаляем лишние пробелы и экранируем спецсимволы
+        $password = trim(mysqli_real_escape_string($this->conn, $password));
+
+        // Проверяем, соответствует ли длина пароля требованиям
+        if (strlen($password) < 8) {
+            die('Пароль должен содержать не менее 8 символов');
+        }
+
+        return $password;
+    }
+
+    public function registerUser()
+    {
+        // Получаем значения полей email и password из формы
+        $email = isset($_POST['email']) ? $this->validateEmail($_POST['email']) : null;
+        $password = isset($_POST['password']) ? $this->validatePassword($_POST['password']) : null;
+
+        // Добавляем нового пользователя в базу данных
+        if ($email && $password) {
+            $stmt = mysqli_prepare($this->conn, "INSERT INTO users (email, password) VALUES (?, ?)");
+            mysqli_stmt_bind_param($stmt, "ss", $email, $password);
+            if (mysqli_stmt_execute($stmt)) {
+                echo 'Вы успешно зарегистрировались';
+            } else {
+                die('Ошибка регистрации');
+            }
+        }
+    }
+
+    public function loginUser()
+    {
+        // Получаем значения полей email и password из формы
+        $email = isset($_POST['email']) ? $this->validateEmail($_POST['email']) : null;
+        $password = isset($_POST['password']) ? $this->validatePassword($_POST['password']) : null;
+
+        // Обработка запроса на авторизацию
+        if ($email && $password) {
+            $stmt = mysqli_prepare($this->conn, "SELECT * FROM users WHERE email=? AND password=?");
+            mysqli_stmt_bind_param($stmt, "ss", $email, $password);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            $row = mysqli_fetch_assoc($result);
+
+            // Проверка, успешен ли запрос
+            if (mysqli_num_rows($result) == 1) {
+
+                // Авторизация прошла успешно, сохраняем данные пользователя в сессии
+                session_start();
+                $_SESSION['loggedin'] = true;
+                $_SESSION['email'] = $email;
+                $_SESSION['userid'] = $row['id'];
+
+                // Перенаправляем пользователя на домашнюю страницу
+                header('Location: index.php');
+                exit();
+            } else {
+
+                // Авторизация не удалась, выводим сообщение об ошибке
+                die("Неверный логин или пароль");
+            }
+        }
+    }
+
+    public function logoutUser()
+    {
+        // Обработка запроса на выход из учётной записи
+        if (isset($_POST['logout'])) {
+            session_start();
+            // разрушаем сессию
+            session_unset();
+            session_destroy();
+            // перенаправляем пользователя на домашнюю страницу
+            header('Location: index.php');
+            exit();
+        }
+    }
+    ?>
